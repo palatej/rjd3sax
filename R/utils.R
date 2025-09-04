@@ -1,3 +1,3 @@
 #' @importFrom rJava .jpackage .jcall .jnull .jarray .jevalArray .jcast .jcastToArray .jinstanceof is.jnull .jnew .jclass
-#' @importFrom rjd3toolkit result dictionary
+#' @importFrom rjd3toolkit result dictionary .proc_likelihood, .proc_vector, .proc_numeric, .proc_matrix
 NULL
