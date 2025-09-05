@@ -58,8 +58,8 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular, seasonal, fixed
   freq<-frequency(data)
   start=start(data)
 
-  regs0<-.proc_vector(jrslt, "regs_effect0")
-  regs1<-.proc_vector(jrslt, "regs_effect1")
+  regs0<-.proc_vector(jrslt, "regression.effect0")
+  regs1<-.proc_vector(jrslt, "regression.effect1")
   tsregs0 <-NULL;
   tsregs1<-NULL;
 
@@ -73,14 +73,31 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular, seasonal, fixed
     model=list(
       regular=regular,
       seasonal=seasonal,
-      parameters=.proc_vector(jrslt, "pfixed"),
-      covariance=.proc_matrix(jrslt, "pfixed_cov")),
+      parameters=.proc_vector(jrslt, "model.pfixed"),
+      covariance=.proc_matrix(jrslt, "model.pfixed_cov")),
     likelihood=.proc_likelihood(jrslt, "ll0."),
     regression=list(
-      coefficients=.proc_vector(jrslt, "regs_c0"),
-      covariance=.proc_matrix(jrslt, "regs_cov0"),
-      linearized=ts(data=.proc_vector(jrslt, "y_lin0"), frequency = freq, start = start),
-      regression_effect=tsregs0)
+      coefficients=.proc_vector(jrslt, "regression.c0"),
+      covariance=.proc_matrix(jrslt, "regression.cov0"),
+      linearized=ts(data=.proc_vector(jrslt, "regression.y_lin0"), frequency = freq, start = start),
+      regression_effect=tsregs0),
+    residuals=list(
+      res=.proc_vector(jrslt, "res0.res"),
+      type=.proc_data(jrslt, "res0.type"),
+      df=.proc_int(jrslt, "res0.df"),
+      dfc=.proc_int(jrslt, "res0.dfc"),
+      mean=.proc_test(jrslt, "res0.mean"),
+      skewness=.proc_test(jrslt, "res0.skewness"),
+      kurtosis=.proc_test(jrslt, "res0.kurtosis"),
+      normality=.proc_test(jrslt, "res0.doornikhansen"),
+      ljung_box=.proc_test(jrslt, "res0.lb"),
+      seasonal_ljung_box=.proc_test(jrslt, "res0.seaslb"),
+      nruns=.proc_test(jrslt, "res0.nruns"),
+      lruns=.proc_test(jrslt, "res0.lruns"),
+      nudruns=.proc_test(jrslt, "res0.nudruns"),
+      ludruns=.proc_test(jrslt, "res0.ludruns")
+    )
+
   )
 
   # final model
@@ -88,20 +105,36 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular, seasonal, fixed
     model=list(
       regular=regular,
       seasonal=seasonal,
-      parameters=.proc_vector(jrslt, "pall"),
-      parima_0=.proc_vector(jrslt, "p0"),
-      parima_1=.proc_vector(jrslt, "p1"),
-      parima_mean=.proc_vector(jrslt, "pmean"),
-      parima_delta=.proc_vector(jrslt, "pdelta"),
-      covariance=.proc_matrix(jrslt, "pall_cov"),
-      scores=.proc_vector(jrslt, "regression.ml.score"),
-      information=.proc_matrix(jrslt, "regression.ml.information")),
+      parameters=.proc_vector(jrslt, "model.pall"),
+      parima_0=.proc_vector(jrslt, "model.p0"),
+      parima_1=.proc_vector(jrslt, "model.p1"),
+      parima_mean=.proc_vector(jrslt, "model.pmean"),
+      parima_delta=.proc_vector(jrslt, "model.pdelta"),
+      covariance=.proc_matrix(jrslt, "model.pall_cov"),
+      scores=.proc_vector(jrslt, "regression.ml.score1"),
+      information=.proc_matrix(jrslt, "regression.ml.information1")),
     likelihood=rjd3toolkit::.proc_likelihood(jrslt, "ll1."),
     regression=list(
-      coefficients=.proc_vector(jrslt, "regs_c1"),
-      covariance=.proc_matrix(jrslt, "regs_cov1"),
-      linearized=ts(data=.proc_vector(jrslt, "y_lin1"), frequency = freq, start = start),
+      coefficients=.proc_vector(jrslt, "regression.c1"),
+      covariance=.proc_matrix(jrslt, "regression.cov1"),
+      linearized=ts(data=.proc_vector(jrslt, "regression.y_lin1"), frequency = freq, start = start),
       regression_effect=tsregs1
+    ),
+    residuals=list(
+      res=.proc_vector(jrslt, "res1.res"),
+      type=.proc_data(jrslt, "res1.type"),
+      df=.proc_int(jrslt, "res1.df"),
+      dfc=.proc_int(jrslt, "res1.dfc"),
+      mean=.proc_test(jrslt, "res1.mean"),
+      skewness=.proc_test(jrslt, "res1.skewness"),
+      kurtosis=.proc_test(jrslt, "res1.kurtosis"),
+      normality=.proc_test(jrslt, "res1.doornikhansen"),
+      ljung_box=.proc_test(jrslt, "res1.lb"),
+      seasonal_ljung_box=.proc_test(jrslt, "res0.seaslb"),
+      nruns=.proc_test(jrslt, "res1.nruns"),
+      lruns=.proc_test(jrslt, "res1.lruns"),
+      nudruns=.proc_test(jrslt, "res1.nudruns"),
+      ludruns=.proc_test(jrslt, "res1.ludruns")
     )
   )
 
