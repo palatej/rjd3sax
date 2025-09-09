@@ -25,11 +25,12 @@ tdairline_decomposition<-function(data, th, bth, se=FALSE){
 }
 
 .jestimation<-function(data, mean=FALSE, X=NULL, regular, seasonal, fixed_phi=TRUE, fixed_bphi=TRUE,
-                              fixed_theta=FALSE, fixed_btheta=FALSE, fixed_var=TRUE, eps=1e-7){
+                              fixed_theta=FALSE, fixed_btheta=FALSE, fixed_var=TRUE, eps=1e-7, parametrization="mean_delta"){
   if (! is.ts(data)) stop("data should be a time series (ts)")
   jrslt<-.jcall('jdplus/advancedsa/base/r/TimeVaryingArimaModels', 'Ljdplus/advancedsa/base/core/tdarima/LtdArimaResults;', 'estimate',
                 as.numeric(data), as.integer(frequency(data)), as.logical(mean), rjd3toolkit::.r2jd_matrix(X), as.integer(regular), as.integer(seasonal)
-                , as.logical(fixed_phi), as.logical(fixed_bphi), as.logical(fixed_theta), as.logical(fixed_btheta), as.logical(fixed_var), as.numeric(eps))
+                , as.logical(fixed_phi), as.logical(fixed_bphi), as.logical(fixed_theta), as.logical(fixed_btheta), as.logical(fixed_var)
+                , as.numeric(eps), as.character(parametrization))
   return (jrslt)
 }
 
@@ -52,8 +53,10 @@ tdairline_decomposition<-function(data, th, bth, se=FALSE){
 #'
 #' @examples
 ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular, seasonal, fixed_phi=TRUE, fixed_bphi=TRUE,
-                                fixed_theta=FALSE, fixed_btheta=FALSE, fixed_var=TRUE, eps=1e-7){
-  jrslt<-.jestimation(data, mean, X, regular, seasonal, fixed_phi, fixed_bphi, fixed_theta, fixed_btheta, fixed_var, eps)
+                                fixed_theta=FALSE, fixed_btheta=FALSE, fixed_var=TRUE, eps=1e-7, parametrization=c("mean_delta", "start_end")){
+
+  parametrization=match.arg(parametrization)
+  jrslt<-.jestimation(data, mean, X, regular, seasonal, fixed_phi, fixed_bphi, fixed_theta, fixed_btheta, fixed_var, eps, parametrization)
 
   freq<-frequency(data)
   start=start(data)
@@ -130,7 +133,7 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular, seasonal, fixed
       kurtosis=.proc_test(jrslt, "res1.kurtosis"),
       normality=.proc_test(jrslt, "res1.doornikhansen"),
       ljung_box=.proc_test(jrslt, "res1.lb"),
-      seasonal_ljung_box=.proc_test(jrslt, "res0.seaslb"),
+      seasonal_ljung_box=.proc_test(jrslt, "res1.seaslb"),
       nruns=.proc_test(jrslt, "res1.nruns"),
       lruns=.proc_test(jrslt, "res1.lruns"),
       nudruns=.proc_test(jrslt, "res1.nudruns"),
