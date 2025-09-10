@@ -1,7 +1,8 @@
 #' @include utils.R
 NULL
 
-LTDARIMA<-'JD3_LtdArima'
+LTDARIMA<-'JD3_LTDARIMA_RSLTS'
+LTDARIMA_LL<-'JD3_LTDARIMA_LIKELIHOOD'
 
 
 
@@ -33,6 +34,53 @@ tdairline_decomposition<-function(data, th, bth, se=FALSE){
                 , as.numeric(eps), as.character(parametrization))
   return (jrslt)
 }
+
+#' Title
+#'
+#' @param data
+#' @param regular
+#' @param seasonal
+#' @param p0
+#' @param p1
+#' @param var1
+#' @param se
+#'
+#' @returns
+#' @export
+#'
+#' @examples
+tdarima_decomposition<-function(data, regular, seasonal, p0, p1, var1=1, se=FALSE){
+  if (! is.ts(data)) stop("data should be a time series (ts)")
+  m<-length(p0)
+  n<-length(data)
+  if (length(p1) != m || n == 0) stop("invalid parameters")
+  p<-NULL
+  if (m == 1){
+    p<-matrix(.linear(p0, p1, n), nrow = 1, ncols=n)
+  }else if (m>1){
+    p<-.linear(p0, p1, n)
+  }
+  if (var1 != 1){
+    var<-matrix(.linear(1, var1, n), nrow = 1, ncols=n)
+    p<-rbind(p, var)
+  }
+  if (is.null(p)){
+    jp<-.jnull("jdplus/toolkit/base/api/math/matrices/Matrix")
+  }
+  else{
+    jp<-.r2jd_matrix(p)
+  }
+
+  jmatrix<-.jcall('jdplus/advancedsa/base/r/TimeVaryingArimaModels', 'Ljdplus/toolkit/base/api/math/matrices/Matrix;', 'arimaDecomposition',
+                  as.numeric(data), as.integer(frequency(data)), as.integer(regular), as.integer(seasonal), as.logical(var1 != 1), jp, as.logical(se))
+  return (rjd3toolkit::.jd2r_matrix(jmatrix))
+}
+
+.linear<-function(p0, p1, n){
+  delta<-(p1-p0)/(n-1)
+  sapply(0:(n-1), function(i){p0+i*delta})
+}
+
 
 #' Title
 #'
@@ -74,11 +122,12 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular, seasonal, fixed
   # initial (fixed) model
   initial=list(
     model=list(
+      period=freq,
       regular=regular,
       seasonal=seasonal,
       parameters=.proc_vector(jrslt, "model.pfixed"),
       covariance=.proc_matrix(jrslt, "model.pfixed_cov")),
-    likelihood=.proc_likelihood(jrslt, "ll0."),
+    likelihood=structure(.proc_likelihood(jrslt, "ll0."), class=LTDARIMA_LL),
     regression=list(
       coefficients=.proc_vector(jrslt, "regression.c0"),
       covariance=.proc_matrix(jrslt, "regression.cov0"),
@@ -106,6 +155,7 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular, seasonal, fixed
   # final model
   final=list(
     model=list(
+      period=freq,
       regular=regular,
       seasonal=seasonal,
       parameters=.proc_vector(jrslt, "model.pall"),
@@ -116,7 +166,7 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular, seasonal, fixed
       covariance=.proc_matrix(jrslt, "model.pall_cov"),
       scores=.proc_vector(jrslt, "regression.ml.score1"),
       information=.proc_matrix(jrslt, "regression.ml.information1")),
-    likelihood=rjd3toolkit::.proc_likelihood(jrslt, "ll1."),
+    likelihood=structure(rjd3toolkit::.proc_likelihood(jrslt, "ll1."), class=LTDARIMA_LL),
     regression=list(
       coefficients=.proc_vector(jrslt, "regression.c1"),
       covariance=.proc_matrix(jrslt, "regression.cov1"),

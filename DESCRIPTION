@@ -27,4 +27,6 @@ Encoding: UTF-8
 Collate: 
     'utils.R'
     'tdarima.R'
+    'tdarima_plot.R'
+    'tdarima_print.R'
     'zzz.R'

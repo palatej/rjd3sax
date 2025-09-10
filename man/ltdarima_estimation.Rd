@@ -15,7 +15,8 @@ ltdarima_estimation(
   fixed_theta = FALSE,
   fixed_btheta = FALSE,
   fixed_var = TRUE,
-  eps = 1e-07
+  eps = 1e-07,
+  parametrization = c("mean_delta", "start_end")
 )
 }
 \arguments{
