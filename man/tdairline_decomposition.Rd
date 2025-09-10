@@ -2,13 +2,32 @@
 % Please edit documentation in R/tdarima.R
 \name{tdairline_decomposition}
 \alias{tdairline_decomposition}
-\title{Title}
+\title{Estimation by means of the Kalman smoother of a time-dependent canonical decomposition
+of airline models}
 \usage{
 tdairline_decomposition(data, th, bth, se = FALSE)
 }
 \arguments{
-\item{se}{}
+\item{data}{The series (a ts).}
+
+\item{th}{The regular moving average parameter (same length as data)}
+
+\item{bth}{The seasonal moving average parameter (same length as data)}
+
+\item{se}{Specifies if the standard deviations of the components are computed}
+}
+\value{
+A mts object is returned, with the trend, the seasonal, the irregular components and - if requested - their standard deviations
 }
 \description{
-Title
+Estimation by means of the Kalman smoother of a time-dependent canonical decomposition
+of airline models
+}
+\examples{
+s<-rjd3toolkit::ABS$X0.2.09.10.M
+th<-seq(.2,-.9, -1.1/(length(s)-1))
+bth<-seq(-.9,-.2, .7/(length(s)-1))
+sa<-tdairline_decomposition(s, th, bth, se=TRUE)
+ts.plot(ts.union(s, sa[,1], sa[,1]+sa[,3]), col=c('gray', 'blue', 'red'))
+ts.plot(sa[,c(4,5,6)], col=c('red', 'blue', 'magenta'))
 }

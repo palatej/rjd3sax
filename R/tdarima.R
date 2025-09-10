@@ -6,23 +6,36 @@ LTDARIMA_LL<-'JD3_LTDARIMA_LIKELIHOOD'
 
 
 
-#' Title
+#' Estimation by means of the Kalman smoother of a time-dependent canonical decomposition
+#' of airline models
 #'
-#' @param data
-#' @param period
-#' @param th
-#' @param bth
-#' @param se
+#' @param data The series (a ts).
+#' @param th The regular moving average parameter (same length as data)
+#' @param bth The seasonal moving average parameter (same length as data)
+#' @param se Specifies if the standard deviations of the components are computed
 #'
-#' @returns
+#' @returns A mts object is returned, with the trend, the seasonal, the irregular components and - if requested - their standard deviations
 #' @export
 #'
 #' @examples
+#' s<-rjd3toolkit::ABS$X0.2.09.10.M
+#' th<-seq(.2,-.9, -1.1/(length(s)-1))
+#' bth<-seq(-.9,-.2, .7/(length(s)-1))
+#' sa<-tdairline_decomposition(s, th, bth, se=TRUE)
+#' ts.plot(ts.union(s, sa[,1], sa[,1]+sa[,3]), col=c('gray', 'blue', 'red'))
+#' ts.plot(sa[,c(4,5,6)], col=c('red', 'blue', 'magenta'))
 tdairline_decomposition<-function(data, th, bth, se=FALSE){
   if (! is.ts(data)) stop("data should be a time series (ts)")
   jmatrix<-.jcall('jdplus/advancedsa/base/r/TimeVaryingArimaModels', 'Ljdplus/toolkit/base/api/math/matrices/Matrix;', 'airlineDecomposition',
             as.numeric(data), as.integer(frequency(data)), as.numeric(th), as.numeric(bth), as.logical(se))
-  return (rjd3toolkit::.jd2r_matrix(jmatrix))
+  z<-rjd3toolkit::.jd2r_matrix(jmatrix)
+  names<-c("trend", "seasonal", "irregular")
+  if (se){
+    names<-c(names, paste0(names, "-stdev"))
+  }
+  colnames(z)<-names
+  all<-ts(z, frequency=frequency(data), start=start(data))
+  return (all)
 }
 
 .jestimation<-function(data, mean=FALSE, X=NULL, regular, seasonal, fixed_phi=TRUE, fixed_bphi=TRUE,
@@ -35,33 +48,43 @@ tdairline_decomposition<-function(data, th, bth, se=FALSE){
   return (jrslt)
 }
 
-#' Title
+#' Estimation by means of the Kalman smoother of the canonical decomposition
+#' of linear time-dependent SARIMA models
 #'
-#' @param data
-#' @param regular
-#' @param seasonal
-#' @param p0
-#' @param p1
-#' @param var1
-#' @param se
+#' @param data The series (a ts).
+#' @param regular The orders of the regular part of the SARIMA models (p,d,q)
+#' @param seasonal The orders of the seasonal part of the SARIMA models (bp,bd,bq). NULL is (0,0,0)
+#' @param p0 The arima parameters at the beginning of the series
+#' @param p1 The arima parameters at the end of the series
+#' @param var1 The (unscaled) variance of the innovations at the end of the series (1 at the beginning of the series)
+#' @param se Specifies if the standard deviations of the components are computed
 #'
-#' @returns
+#' @returns A mts object is returned, with the trend, the seasonal, the irregular components and - if requested - their standard deviations
 #' @export
 #'
+#' @details The arima parameters are organized in the following order: phi, bphi, theta, btheta
+#'
 #' @examples
-tdarima_decomposition<-function(data, regular, seasonal, p0, p1, var1=1, se=FALSE){
+#' s<- rjd3toolkit::Retail$RetailSalesTotal
+#'
+#' q<-rjd3sax::ltdarima_estimation(s, regular=c(0,1,1), seasonal=c(0,1,1),
+#'  fixed_var=FALSE, eps=1e-15, parametrization = "mean_delta")
+#' sa<-rjd3sax::ltdarima_decomposition(s, c(0,1,1), c(0,1,1),
+#' q$final$model$parima_0, q$final$model$parima_1, var1=q$final$model$parameters[5], se=TRUE)
+#' ts.plot(ts.union(s, sa[,1], sa[,1]+sa[,3]), col=c('gray', 'blue', 'magenta'))
+ltdarima_decomposition<-function(data, regular, seasonal, p0, p1, var1=1, se=FALSE){
   if (! is.ts(data)) stop("data should be a time series (ts)")
   m<-length(p0)
   n<-length(data)
   if (length(p1) != m || n == 0) stop("invalid parameters")
   p<-NULL
   if (m == 1){
-    p<-matrix(.linear(p0, p1, n), nrow = 1, ncols=n)
+    p<-matrix(.linear(p0, p1, n), nrow = 1, ncol=n)
   }else if (m>1){
     p<-.linear(p0, p1, n)
   }
   if (var1 != 1){
-    var<-matrix(.linear(1, var1, n), nrow = 1, ncols=n)
+    var<-matrix(.linear(1, var1, n), nrow = 1, ncol=n)
     p<-rbind(p, var)
   }
   if (is.null(p)){
@@ -73,7 +96,75 @@ tdarima_decomposition<-function(data, regular, seasonal, p0, p1, var1=1, se=FALS
 
   jmatrix<-.jcall('jdplus/advancedsa/base/r/TimeVaryingArimaModels', 'Ljdplus/toolkit/base/api/math/matrices/Matrix;', 'arimaDecomposition',
                   as.numeric(data), as.integer(frequency(data)), as.integer(regular), as.integer(seasonal), as.logical(var1 != 1), jp, as.logical(se))
-  return (rjd3toolkit::.jd2r_matrix(jmatrix))
+  z<-rjd3toolkit::.jd2r_matrix(jmatrix)
+  ncmps<-dim(z)[2]
+  if (se)    ncmps<-ncmps/2
+  if (ncmps == 3)  names<-c("trend", "seasonal", "irregular")else names <-c("trend", "irregular")
+  if (se){
+    names<-c(names, paste0(names, "-stdev"))
+  }
+  colnames(z)<-names
+  all<-ts(z, frequency=frequency(data), start=start(data))
+  return (all)
+}
+
+.pcount<-function(regular, seasonal){
+  n<-regular[1]+regular[3]
+  if (! is.null(seasonal))
+    n=n+seasonal[1]+seasonal[3]
+  return (n)
+}
+
+#' Estimation by means of the Kalman smoother of a time-dependent canonical decomposition (generic solution)
+#'
+#' @param data The series (a ts).
+#' @param regular The orders of the regular part of the SARIMA models (p,d,q)
+#' @param seasonal The orders of the seasonal part of the SARIMA models (bp,bd,bq). NULL is (0,0,0)
+#' @param parameters The time dependent parameters. The matrix contains for each column
+#' all the parameters of the model, with the columns corresponding to an observation. So,
+#' the number of columns is identical to the length of the series and the number of rows corresponds
+#' to the arima parameters (regular + seasonal), with eventually the innovation variances
+#'
+#' @param se Specifies if the standard deviations of the components are computed
+#'
+#' @returns A mts object is returned, with the trend, the seasonal, the irregular components and - if requested - their standard deviations
+#' @export
+#'
+#' @details The arima parameters are organized in the following order: phi, bphi, theta, btheta
+#' @export
+#'
+#' @examples
+#' s<-rjd3toolkit::ABS$X0.2.09.10.M
+#' n<-length(s)
+#' r<-runif(n*2,-1,-.6)
+#' p<-matrix(r, nrow=2, ncol=n)
+#' p<-rbind(p, runif(n))
+#' sa<-rjd3sax::tdarima_decomposition2(s, c(0,1,1), c(0,1,1),parameter=p, se=TRUE)
+#' ts.plot(ts.union(s, sa[,1], sa[,1]+sa[,3]), col=c('gray', 'blue', 'magenta'))
+#' ts.plot(sa[,c(4,5,6)], col=c('red', 'blue', 'magenta'))
+tdarima_decomposition2<-function(data, regular, seasonal, parameters, se=FALSE){
+  if (! is.ts(data)) stop("data should be a time series (ts)")
+  if (! is.matrix(parameters)) stop("parameters should be a matrix")
+  d=dim(parameters)
+  n<-length(data)
+  if (d[2] != n || n == 0) stop("invalid parameters")
+  if (is.null(seasonal)) seasonal<-c(0,0,0)
+  m=.pcount(regular, seasonal)
+  if (d[1] != m && d[1] != m+1) stop("invalid parameters")
+  var = d[1]>m
+  jp<-.r2jd_matrix(parameters)
+  jmatrix<-.jcall('jdplus/advancedsa/base/r/TimeVaryingArimaModels', 'Ljdplus/toolkit/base/api/math/matrices/Matrix;', 'arimaDecomposition',
+                  as.numeric(data), as.integer(frequency(data)), as.integer(regular), as.integer(seasonal), as.logical(var), jp, as.logical(se))
+  z<-rjd3toolkit::.jd2r_matrix(jmatrix)
+  ncmps<-dim(z)[2]
+  if (se)    ncmps<-ncmps/2
+  if (ncmps == 3)  names<-c("trend", "seasonal", "irregular")else names <-c("trend", "irregular")
+  if (se){
+    names<-c(names, paste0(names, "-stdev"))
+  }
+  colnames(z)<-names
+  all<-ts(z, frequency=frequency(data), start=start(data))
+  return (all)
 }
 
 .linear<-function(p0, p1, n){
@@ -82,24 +173,33 @@ tdarima_decomposition<-function(data, regular, seasonal, p0, p1, var1=1, se=FALS
 }
 
 
-#' Title
+#' Estimation of a regression model with linear time-dependent SARIMA noises
 #'
-#' @param data
-#' @param mean
-#' @param x
-#' @param regular
-#' @param seasonal
-#' @param fixed_phi
-#' @param fixed_bphi
-#' @param fixed_theta
-#' @param fixed_btheta
-#' @param fixed_var
-#' @param eps
+#' @param data The series (a ts).
+#' @param mean Mean correction
+#' @param x The regression variables. A matrix with the same number of rows as the
+#' data in the series
+#' @param regular The orders of the regular part of the SARIMA models (p,d,q)
+#' @param seasonal The orders of the seasonal part of the SARIMA models (bp,bd,bq). NULL is (0,0,0)
+#' @param fixed_phi Indicates that the regular auto-regressive parameters are fixed or not.
+#' @param fixed_bphi Indicates that the seasonal auto-regressive parameters are fixed or not.
+#' @param fixed_theta Indicates that the regular moving average parameters are fixed or not.
+#' @param fixed_btheta Indicates that the seasonal moving average parameters are fixed or not.
+#' @param fixed_var Indicates that the variances of the innovations are fixed or not.
+#' @param eps The precision of the optimization procedure
+#' @param parametrization Type of the parametrization of the linear time-dependent parameters:
+#' first and last parameters or average and variation of the parameters
 #'
 #' @returns
 #' @export
 #'
 #' @examples
+#' s<-rjd3toolkit::ABS$X0.2.09.10.M
+#' td<-rjd3toolkit::td(s=s)
+#' q<-rjd3sax::ltdarima_estimation(s, regular=c(0,1,1), seasonal=c(0,1,1), X=td,
+#'  fixed_var = FALSE, eps=1e-15, parametrization = "mean_delta")
+
+
 ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular, seasonal, fixed_phi=TRUE, fixed_bphi=TRUE,
                                 fixed_theta=FALSE, fixed_btheta=FALSE, fixed_var=TRUE, eps=1e-7, parametrization=c("mean_delta", "start_end")){
 

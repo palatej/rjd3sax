@@ -2,7 +2,7 @@
 % Please edit documentation in R/tdarima.R
 \name{ltdarima_estimation}
 \alias{ltdarima_estimation}
-\title{Title}
+\title{Estimation of a regression model with linear time-dependent SARIMA noises}
 \usage{
 ltdarima_estimation(
   data,
@@ -20,8 +20,38 @@ ltdarima_estimation(
 )
 }
 \arguments{
-\item{eps}{}
+\item{data}{The series (a ts).}
+
+\item{mean}{Mean correction}
+
+\item{regular}{The orders of the regular part of the SARIMA models (p,d,q)}
+
+\item{seasonal}{The orders of the seasonal part of the SARIMA models (bp,bd,bq). NULL is (0,0,0)}
+
+\item{fixed_phi}{Indicates that the regular auto-regressive parameters are fixed or not.}
+
+\item{fixed_bphi}{Indicates that the seasonal auto-regressive parameters are fixed or not.}
+
+\item{fixed_theta}{Indicates that the regular moving average parameters are fixed or not.}
+
+\item{fixed_btheta}{Indicates that the seasonal moving average parameters are fixed or not.}
+
+\item{fixed_var}{Indicates that the variances of the innovations are fixed or not.}
+
+\item{eps}{The precision of the optimization procedure}
+
+\item{parametrization}{Type of the parametrization of the linear time-dependent parameters:
+first and last parameters or average and variation of the parameters}
+
+\item{x}{The regression variables. A matrix with the same number of rows as the
+data in the series}
 }
 \description{
-Title
+Estimation of a regression model with linear time-dependent SARIMA noises
+}
+\examples{
+s<-rjd3toolkit::ABS$X0.2.09.10.M
+td<-rjd3toolkit::td(s=s)
+q<-rjd3sax::ltdarima_estimation(s, regular=c(0,1,1), seasonal=c(0,1,1), X=td,
+ fixed_var = FALSE, eps=1e-15, parametrization = "mean_delta")
 }
