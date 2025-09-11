@@ -264,7 +264,8 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
 
   )
   flin<-ts(data=.proc_vector(jrslt, "regression.y_lin1"), frequency = freq, start = start)
-  ncorr<-.pdelta(regular, seasonal, fixed_phi, fixed_bphi, fixed_theta, fixed_btheta, fixed_var)
+  pdetails<-.pdetails(parametrization, regular, seasonal, fixed_phi, fixed_bphi, fixed_theta, fixed_btheta, fixed_var)
+  ncorr<-length(pdetails$sidx)
   m<-length(data)
   parameters<-.proc_vector(jrslt, "model.pall")
   covariance<-.proc_matrix(jrslt, "model.pall_cov")
@@ -351,7 +352,7 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
   return(structure(list(initial=initial, final=final, decomposition=sa), class=LTDARIMA))
 }
 
-.pnames<-function(meandelta, regular, seasonal, fixed_phi, fixed_bphi,
+.pdetails<-function(meandelta, regular, seasonal, fixed_phi, fixed_bphi,
                    fixed_theta, fixed_btheta, fixed_var){
   p = regular[1]
   d = regular[2]
@@ -360,79 +361,131 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
   bd = seasonal[2]
   bq = seasonal[3]
   names <- NULL
-
-  if (p > 0 && fixed_phi) {
-    names <- c(names, paste0("phi(", 1:p, ")"))
-  }
-  if (bp > 0 && fixed_bphi) {
-    names <- c(names, paste0("bphi(", 1:bp, ")"))
-  }
-  if (q > 0 && fixed_theta) {
-    names <- c(names, paste0("theta(", 1:q, ")"))
-  }
-  if (bq > 0 && fixed_btheta) {
-    names <- c(names, paste0("btheta(", 1:bq, ")"))
-  }
-  if (meandelta){
-    if (p > 0 && !fixed_phi) {
-      names <- c(names, paste0("phi-mean(", 1:p, ")"))
+  dnames <- NULL
+  didx <- NULL
+  sidx <- NULL
+  icur <- 1
+    # first, p or p0 or pmean
+  if (p > 0) {
+    if (fixed_phi){
+      names <- c(names, paste0("phi(", 1:p, ")"))
+    }else{
+      if (meandelta){
+        names <- c(names, paste0("phi-mean(", 1:p, ")"))
+      }else{
+        names <- c(names, paste0("phi-start(", 1:p, ")"))
+      }
+      didx<-c(didx, icur:(icur+p-1))
     }
-    if (bp > 0 && !fixed_bphi) {
-      names <- c(names, paste0("bphi-mean(", 1:bp, ")"))
+    icur<-icur+p
+  }
+  if (bp > 0) {
+    if (fixed_bphi){
+      names <- c(names, paste0("bphi(", 1:bp, ")"))
+    }else{
+      if (meandelta){
+        names <- c(names, paste0("bphi-mean(", 1:bp, ")"))
+      }else{
+        names <- c(names, paste0("bphi-start(", 1:bp, ")"))
+      }
+      didx<-c(didx, icur:(icur+bp-1))
     }
-    if (q > 0 && !fixed_theta) {
-      names <- c(names, paste0("theta-mean(", 1:q, ")"))
+    icur<-icur+bp
+  }
+  if (q > 0) {
+    if (fixed_theta){
+      names <- c(names, paste0("theta(", 1:q, ")"))
+    }else{
+      if (meandelta){
+        names <- c(names, paste0("theta-mean(", 1:q, ")"))
+      }else{
+        names <- c(names, paste0("theta-start(", 1:q, ")"))
+      }
+      didx<-c(didx, icur:(icur+q-1))
     }
-    if (bq > 0 && !fixed_btheta) {
-      names <- c(names, paste0("btheta-mean(", 1:bq, ")"))
+    icur<-icur+q
+  }
+  if (bq > 0) {
+    if (fixed_btheta){
+      names <- c(names, paste0("btheta(", 1:bq, ")"))
+    }else{
+      if (meandelta){
+        names <- c(names, paste0("btheta-mean(", 1:bq, ")"))
+      }else{
+        names <- c(names, paste0("btheta-start(", 1:bq, ")"))
+      }
+      didx<-c(didx, icur:(icur+bq-1))
     }
-    if (p > 0 && ! fixed_phi) {
+    icur<-icur+bq
+  }
+  # then, p1 or pdelta + derived
+  if (p > 0 && ! fixedphi) {
+    if (meandelta){
       names <- c(names, paste0("phi-delta(", 1:p, ")"))
-    }
-    if (bp > 0 && ! fixed_bphi) {
-      names <- c(names, paste0("bphi-delta(", 1:bp, ")"))
-    }
-    if (q > 0 && ! fixed_theta) {
-      names <- c(names, paste0("theta-delta(", 1:q, ")"))
-    }
-    if (bq > 0 && ! fixed_btheta) {
-      names <- c(names, paste0("btheta-delta(", 1:bq, ")"))
-    }
-    if (! fixed_var)
-      names <- c(names, paste0("var-delta"))
-  }else{
-    if (p > 0 && !fixed_phi) {
-      names <- c(names, paste0("phi-start(", 1:p, ")"))
-    }
-    if (bp > 0 && !fixed_bphi ) {
-      names <- c(names, paste0("bphi-start(", 1:bp, ")"))
-    }
-    if (q > 0 && ! fixed_theta) {
-      names <- c(names, paste0("theta-start(", 1:q, ")"))
-    }
-    if (bq > 0 && ! fixed_btheta) {
-      names <- c(names, paste0("btheta-start(", 1:bq, ")"))
-    }
-    if (p > 0 && ! fixed_phi) {
+      sidx<-c(sidx, icur:(icur+p-1))
+      dnames <- c(dnames, paste0("phi-start(", 1:p, ")[derived]"), paste0("phi-end(", 1:p, ")[derived]"))
+    }else{
       names <- c(names, paste0("phi-end(", 1:p, ")"))
+      dnames <- c(dnames, paste0("phi-mean(", 1:p, ")[derived]"), paste0("phi-delta(", 1:p, ")[derived]"))
     }
-    if (bp > 0 && ! fixed_bphi) {
-      names <- c(names, paste0("bphi-end(", 1:bp, ")"))
-    }
-    if (q > 0 && ! fixed_theta) {
-      names <- c(names, paste0("theta-end(", 1:q, ")"))
-    }
-    if (bq > 0 && ! fixed_btheta) {
-      names <- c(names, paste0("btheta-end(", 1:bq, ")"))
-    }
-    if (! fixed_var)
-      names <- c(names, paste0("var-end"))
+    didx<-c(didx, icur:(icur+p-1))
+    icur<-icur+p
   }
-  return (names)
+  if (bp > 0 && ! fixedbphi) {
+    if (meandelta){
+      names <- c(names, paste0("bphi-delta(", 1:bp, ")"))
+      sidx<-c(sidx, icur:(icur+bp-1))
+      dnames <- c(dnames, paste0("bphi-start(", 1:bp, ")[derived]"), paste0("bphi-end(", 1:bp, ")[derived]"))
+    }else{
+      names <- c(names, paste0("bphi-end(", 1:bp, ")"))
+      dnames <- c(dnames, paste0("bphi-mean(", 1:bp, ")[derived]"), paste0("bphi-delta(", 1:bp, ")[derived]"))
+    }
+    didx<-c(didx, icur:(icur+bp-1))
+    icur<-icur+bp
+  }
+  if (q > 0 && ! fixedtheta) {
+    if (meandelta){
+      names <- c(names, paste0("theta-delta(", 1:q, ")"))
+      sidx<-c(sidx, icur:(icur+q-1))
+      dnames <- c(dnames, paste0("theta-start(", 1:q, ")[derived]"), paste0("theta-end(", 1:q, ")[derived]"))
+    }else{
+      names <- c(names, paste0("theta-end(", 1:q, ")"))
+      dnames <- c(dnames, paste0("theta-mean(", 1:q, ")[derived]"), paste0("theta-delta", 1:q, ")[derived]"))
+    }
+    didx<-c(didx, icur:(icur+q-1))
+    icur<-icur+q
+  }
+  if (bq > 0 && ! fixedbtheta) {
+    if (meandelta){
+      names <- c(names, paste0("btheta-delta(", 1:bq, ")"))
+      sidx<-c(sidx, icur:(icur+bq-1))
+      dnames <- c(dnames, paste0("btheta-start(", 1:bq, ")[derived]"), paste0("btheta-end(", 1:bq, ")[derived]"))
+    }else{
+      names <- c(names, paste0("btheta-end(", 1:bq, ")"))
+      dnames <- c(dnames, paste0("btheta-mean(", 1:bq, ")[derived]"), paste0("btheta-delta(", 1:bq, ")[derived]"))
+    }
+    didx<-c(didx, icur:(icur+bq-1))
+    icur<-icur+bq
+  }
+  if (! fixed_var){
+    if (meandelta){
+       names <- c(names, paste0("var-delta"))
+      sidx<-c(sidx,icur)
+    }
+  }
+  return (list(
+    names=names,
+    dnames=dnames,
+    sidx=sidx,
+    didx=didx
+  ))
 }
 
-.pdelta<-function(regular, seasonal, fixed_phi, fixed_bphi,
+.pdelta<-function(parametrization, regular, seasonal, fixed_phi, fixed_bphi,
                   fixed_theta, fixed_btheta, fixed_var){
+  if (parametrization=="start_end"){
+    if (fixed_var) return (0) else return (1)
+  }
   p = regular[1]
   d = regular[2]
   q = regular[3]
