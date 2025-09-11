@@ -1,5 +1,5 @@
 #' @include utils.R
-#' @import rjd3toolkit
+#' @include tdgeneric.R
 
 .onLoad <- function(libname, pkgname) {
   if (!requireNamespace("rjd3toolkit", quietly = TRUE)) stop("Loading rjd3 libraries failed")

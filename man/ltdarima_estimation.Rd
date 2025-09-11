@@ -2,27 +2,33 @@
 % Please edit documentation in R/tdarima.R
 \name{ltdarima_estimation}
 \alias{ltdarima_estimation}
-\title{Estimation of a regression model with linear time-dependent SARIMA noises}
+\title{Estimation and decomposition of a regression model with linear time-dependent SARIMA noises}
 \usage{
 ltdarima_estimation(
   data,
   mean = FALSE,
   X = NULL,
-  regular,
-  seasonal,
+  regular = c(0, 1, 1),
+  seasonal = c(0, 1, 1),
   fixed_phi = TRUE,
   fixed_bphi = TRUE,
   fixed_theta = FALSE,
   fixed_btheta = FALSE,
   fixed_var = TRUE,
   eps = 1e-07,
-  parametrization = c("mean_delta", "start_end")
+  parametrization = c("mean_delta", "start_end"),
+  decomposition = TRUE,
+  regeffects = NULL,
+  clean = TRUE
 )
 }
 \arguments{
 \item{data}{The series (a ts).}
 
 \item{mean}{Mean correction}
+
+\item{X}{The regression variables. A matrix with the same number of rows as the
+data in the series}
 
 \item{regular}{The orders of the regular part of the SARIMA models (p,d,q)}
 
@@ -43,11 +49,21 @@ ltdarima_estimation(
 \item{parametrization}{Type of the parametrization of the linear time-dependent parameters:
 first and last parameters or average and variation of the parameters}
 
-\item{x}{The regression variables. A matrix with the same number of rows as the
-data in the series}
+\item{decomposition}{Indicates that a decomposition of the series must be processed}
+
+\item{regeffects}{In case of regression variables (excluding the mean correction),
+the user must specify to which component the regression effects are associated
+(1 for the trend, 2 for the seasonal and 3 for the irregular). If not specified, the
+final components are not computed.}
+
+\item{clean}{Cleans missing values at the beginning/end of the series. Should be
+set to false if you want forecasts/backcasts}
+}
+\value{
+A JD3_LTDARIMA_RSLTS object
 }
 \description{
-Estimation of a regression model with linear time-dependent SARIMA noises
+Estimation and decomposition of a regression model with linear time-dependent SARIMA noises
 }
 \examples{
 s<-rjd3toolkit::ABS$X0.2.09.10.M

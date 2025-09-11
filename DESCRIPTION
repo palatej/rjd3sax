@@ -29,4 +29,5 @@ Collate:
     'tdarima.R'
     'tdarima_plot.R'
     'tdarima_print.R'
+    'tdgeneric.R'
     'zzz.R'
