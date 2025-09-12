@@ -1,3 +1,6 @@
+#' @include tdgeneric.R
+
+
 #' @export
 plot.JD3_LTDARIMA_RSLTS <- function(x, first_date = NULL, last_date = NULL,
                                       type_chart = c("sa-trend", "seas-irr"),
@@ -13,7 +16,7 @@ plot.JD3_LTDARIMA_RSLTS <- function(x, first_date = NULL, last_date = NULL,
   if (is.null(x$decomposition)){
     return(NULL)
   }
-  plot(rjd3toolkit::sa_decomposition(x),
+  plot(sa_decomposition(x),
        first_date = first_date, last_date = last_date,
        type_chart = type_chart,
        caption = caption,

@@ -264,17 +264,26 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
 
   )
   flin<-ts(data=.proc_vector(jrslt, "regression.y_lin1"), frequency = freq, start = start)
-  pdetails<-.pdetails(parametrization, regular, seasonal, fixed_phi, fixed_bphi, fixed_theta, fixed_btheta, fixed_var)
-  ncorr<-length(pdetails$sidx)
-  m<-length(data)
   parameters<-.proc_vector(jrslt, "model.pall")
   covariance<-.proc_matrix(jrslt, "model.pall_cov")
-  if (ncorr>0){
+  pdetails<-.pdetails(parametrization=="mean_delta", regular, seasonal, fixed_phi, fixed_bphi, fixed_theta, fixed_btheta, fixed_var)
+  pderived<-.pderived(parametrization=="mean_delta", parameters, covariance, pdetails$didx)
+  m<-length(data)
+
+  idx<-pdetails$sidx
+  if (! is.null(idx)){
     np<-length(parameters)
-    idx<-(np-ncorr+1):np
     parameters[idx]<- parameters[idx]/(m-1)
     covariance[,idx]<-covariance[,idx]/(m-1)
     covariance[idx,]<-covariance[idx,]/(m-1)
+  }else{
+    ndp<-length(pderived$dp)
+    i<-2
+    while (i<= ndp){
+      pderived$dp[i]<-pderived$dp[i]/(m-1)
+      pderived$edp[i]<-pderived$edp[i]/(m-1)
+      i<-i+2
+    }
   }
 
   # final model
@@ -285,8 +294,12 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
       period=freq,
       regular=regular,
       seasonal=seasonal,
+      parameters_names=pdetails$names,
       parameters=parameters,
-      parameters_names=.pnames(parametrization=="mean_delta", regular, seasonal, fixed_phi, fixed_bphi, fixed_theta, fixed_btheta, fixed_var),
+      parameters_stde=sqrt(diag(covariance)),
+      derived_parameters_names=pdetails$dnames,
+      derived_parameters=pderived$dp,
+      derived_parameters_stde=pderived$edp,
       parima_0=.proc_vector(jrslt, "model.p0"),
       parima_1=.proc_vector(jrslt, "model.p1"),
       parima_mean=.proc_vector(jrslt, "model.pmean"),
@@ -419,7 +432,7 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
     icur<-icur+bq
   }
   # then, p1 or pdelta + derived
-  if (p > 0 && ! fixedphi) {
+  if (p > 0 && ! fixed_phi) {
     if (meandelta){
       names <- c(names, paste0("phi-delta(", 1:p, ")"))
       sidx<-c(sidx, icur:(icur+p-1))
@@ -431,7 +444,7 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
     didx<-c(didx, icur:(icur+p-1))
     icur<-icur+p
   }
-  if (bp > 0 && ! fixedbphi) {
+  if (bp > 0 && ! fixed_bphi) {
     if (meandelta){
       names <- c(names, paste0("bphi-delta(", 1:bp, ")"))
       sidx<-c(sidx, icur:(icur+bp-1))
@@ -443,19 +456,19 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
     didx<-c(didx, icur:(icur+bp-1))
     icur<-icur+bp
   }
-  if (q > 0 && ! fixedtheta) {
+  if (q > 0 && ! fixed_theta) {
     if (meandelta){
       names <- c(names, paste0("theta-delta(", 1:q, ")"))
       sidx<-c(sidx, icur:(icur+q-1))
       dnames <- c(dnames, paste0("theta-start(", 1:q, ")[derived]"), paste0("theta-end(", 1:q, ")[derived]"))
     }else{
       names <- c(names, paste0("theta-end(", 1:q, ")"))
-      dnames <- c(dnames, paste0("theta-mean(", 1:q, ")[derived]"), paste0("theta-delta", 1:q, ")[derived]"))
+      dnames <- c(dnames, paste0("theta-mean(", 1:q, ")[derived]"), paste0("theta-delta(", 1:q, ")[derived]"))
     }
     didx<-c(didx, icur:(icur+q-1))
     icur<-icur+q
   }
-  if (bq > 0 && ! fixedbtheta) {
+  if (bq > 0 && ! fixed_btheta) {
     if (meandelta){
       names <- c(names, paste0("btheta-delta(", 1:bq, ")"))
       sidx<-c(sidx, icur:(icur+bq-1))
@@ -481,37 +494,35 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
   ))
 }
 
-.pdelta<-function(parametrization, regular, seasonal, fixed_phi, fixed_bphi,
-                  fixed_theta, fixed_btheta, fixed_var){
-  if (parametrization=="start_end"){
-    if (fixed_var) return (0) else return (1)
-  }
-  p = regular[1]
-  d = regular[2]
-  q = regular[3]
-  bp = seasonal[1]
-  bd = seasonal[2]
-  bq = seasonal[3]
+.pderived<-function(meandelta, p, cov, idx){
+  n<-length(idx)
+  n2<-n/2
+  dp<-array(dim=n2)
+  edp<-array(dim=n/2)
+  if (meandelta){
+    for (i in 1:n2){
+      dp[2*i-1]<-p[idx[i]]-p[idx[i+n2]]/2
+      dp[2*i]<-p[idx[i]]+p[idx[i+n2]]/2
+      if (! is.null(cov)){
+        edp[2*i-1]<-cov[idx[i], idx[i]]+cov[idx[i+n2],idx[i+n2]]/4-cov[idx[i],idx[i+n2]]
+        edp[2*i]<-cov[idx[i], idx[i]]+cov[idx[i+n2],idx[i+n2]]/4+cov[idx[i],idx[i+n2]]
+      }
+    }
 
-  m<-0
-
-  if (p > 0 && ! fixed_phi) {
-    m<-m+p
+  }else{
+    for (i in 1:n2){
+      dp[2*i-1]<-(p[idx[i]]+p[idx[i+n2]])/2
+      dp[2*i]<-p[idx[i+n2]]-p[idx[i]]
+      if (! is.null(cov)){
+        edp[2*i-1]<-(cov[idx[i], idx[i]]+cov[idx[i+n2],idx[i+n2]])/4+cov[idx[i],idx[i+n2]]/2
+        edp[2*i]<-(cov[idx[i], idx[i]]+cov[idx[i+n2],idx[i+n2]])-2*cov[idx[i],idx[i+n2]]
+      }
+    }
   }
-  if (bp > 0 && ! fixed_bphi) {
-    m<-m+bp
-  }
-  if (q > 0 && ! fixed_theta) {
-    m<-m+q
-  }
-  if (bq > 0 && ! fixed_btheta) {
-    m<-m+bq
-  }
-  if (! fixed_var){
-    m<-m+1
-  }
-  return (m)
+  return (list(dp=dp,edp=sqrt(edp)))
 }
+
+
 
 
 

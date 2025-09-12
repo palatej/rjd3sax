@@ -1,4 +1,6 @@
 #' @importFrom rjd3toolkit sa_decomposition
+NULL
+
 #' @export
 sa_decomposition.JD3_LTDARIMA_RSLTS <- function(x, ...) {
   if (is.null(x)) {
@@ -20,8 +22,3 @@ sa_decomposition.JD3_LTDARIMA_RSLTS <- function(x, ...) {
   ))
 }
 
-
-#' @export
-sa_decomposition.JD3_LTDARIMA_RSLTS <- function(x, ...) {
-  return(rjd3toolkit::sa_decomposition(x$result))
-}

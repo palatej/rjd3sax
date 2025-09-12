@@ -21,23 +21,39 @@ summary.JD3_LTDARIMA_RSLTS  <- function(object, digits = max(3L, getOption("digi
   summaryFinalModel(x$final, ...)
 }
 
-
-printInitialModel <- function(x, ...) {
+printInitialModel <- function(x, digits = max(3L, getOption("digits") - 3L), summary_info = getOption("summary_info"), ...) {
   sarima<-.sarima_coef_table(x, ...)
-  cat("\n", "Initial SARIMA model", "\n", sep = "")
+  reg<-.reg_coef_table(x, ...)
+  cat("\n", "Initial SARIMA model", "\n\n", sep = "")
+  print(x$likelihood)
   cat(.arima_node(sarima$sarima_orders$p, sarima$sarima_orders$d, sarima$sarima_orders$q),
       .arima_node(sarima$sarima_orders$bp, sarima$sarima_orders$bd, sarima$sarima_orders$bq),"\n")
   if (!is.null(sarima$coef_table)) {
     print(sarima$coef_table, digits=3,...)
   }
+  if (! is.null(reg)){
+    cat("\n", "Regression", "\n", sep = "")
+    print(reg, 3, ...)
+  }
   invisible(x)
 }
 
-printFinalModel <- function(x, ...) {
+printFinalModel <- function(x, digits = max(3L, getOption("digits") - 3L), summary_info = getOption("summary_info"), ...) {
   tdarima<-.tdarima_coef_table(x, ...)
-  cat("\n", "Time-dependent SARIMA model", "\n", sep = "")
+  reg<-.reg_coef_table(x, ...)
+  cat("\n", "Time-dependent SARIMA model", "\n\n", sep = "")
+  print(x$likelihood)
+  cat("\n", "Estimated parameters", "\n", sep = "")
   if (!is.null(tdarima$coef_table)) {
     print(tdarima$coef_table, digits=3, ...)
+  }
+  if (!is.null(tdarima$dcoef_table)) {
+    cat("\n", "Derived parameters", "\n", sep = "")
+    print(tdarima$dcoef_table, digits=3, ...)
+  }
+  if (! is.null(reg)){
+    cat("\n", "Regression", "\n", sep = "")
+    print(reg, 3, ...)
   }
   invisible(x)
 }
@@ -47,6 +63,7 @@ summaryInitialModel <- function(x, digits = max(3L, getOption("digits") - 3L), s
   cat("\n", "Initial SARIMA model", "\n", sep = "")
   cat(.arima_node(sarima$sarima_orders$p, sarima$sarima_orders$d, sarima$sarima_orders$q),
       .arima_node(sarima$sarima_orders$bp, sarima$sarima_orders$bd, sarima$sarima_orders$bq),"\n")
+  print(sarima$coef_table, digits = digits, na.print = "NA", ...)
   if (!is.null(sarima$coef_table)) {
     print(sarima$coef_table, digits = digits, na.print = "NA", ...)
   }
@@ -121,6 +138,26 @@ summary.JD3_LTDARIMA_LIKELIHOOD <- function(object, ...) {
   )
 }
 
+.reg_coef_table <- function(x, ...) {
+  reg<-x$regression
+  ll<-x$likelihood
+  ndf <- ll$neffective - ll$nparams
+  val <- reg$coefficients
+  if (is.null(val)){return (NULL)}
+  names <- paste0("var-", 1:length(val))
+  stde <- sqrt(diag(reg$covariance))
+  t <- val / stde
+  pval <- 2 * pt(abs(t), ndf, lower.tail = FALSE)
+  table <- data.frame(val, stde, t, pval,
+                      stringsAsFactors = FALSE)
+  colnames(table) <- c(
+    "Estimate", "Std. Error",
+    "T-stat", "Pr(>|t|)"
+  )
+  rownames(table) <- names
+  return (table)
+}
+
 .tdarima_coef_table <- function(x, ...) {
   model<-x$model
   ll<-x$likelihood
@@ -131,32 +168,39 @@ summary.JD3_LTDARIMA_LIKELIHOOD <- function(object, ...) {
   pmean<-model$parima_mean
   pdelta<-model$parima_delta
 
- cov<-model$covariance
- if (length(pall) > 0){
-   if(! is.null(cov)) {
-     stde <- sqrt(diag(model$covariance))
-     t <- pall / stde
-     pval <- 2 * pt(abs(t), ndf, lower.tail = FALSE)
-     table <- data.frame(pall, stde, t, pval,
-                         stringsAsFactors = FALSE)
-     colnames(table) <- c(
-       "Estimate", "Std. Error",
-       "T-stat", "Pr(>|t|)"
-     )
-     rownames(table) <- model$parameters_names
-   }else{
-     table <- data.frame(pall,
-                         stringsAsFactors = FALSE)
-     colnames(table) <- c(
-       "Estimate"
-     )
-     rownames(table) <- model$parameters_names
-   }
- }else {
-   table <- NULL
- }
- return (list(
-   coef_table = table)
+  if (length(pall) > 0){
+    stde <- model$parameters_stde
+    t <- pall / stde
+    pval <- 2 * pt(abs(t), ndf, lower.tail = FALSE)
+    table <- data.frame(pall, stde, t, pval,
+                        stringsAsFactors = FALSE)
+    colnames(table) <- c(
+      "Estimate", "Std. Error",
+      "T-stat", "Pr(>|t|)"
+    )
+    rownames(table) <- model$parameters_names
+  }else {
+    table <- NULL
+  }
+  if (length(pall) > 0){
+    dp <- model$derived_parameters
+    dstde <- model$derived_parameters_stde
+    t <- dp / dstde
+    pval <- 2 * pt(abs(t), ndf, lower.tail = FALSE)
+    dtable <- data.frame(dp, dstde, t, pval,
+                        stringsAsFactors = FALSE)
+    colnames(dtable) <- c(
+      "Estimate", "Std. Error",
+      "T-stat", "Pr(>|t|)"
+    )
+    rownames(dtable) <- model$derived_parameters_names
+  }else {
+    dtable <- NULL
+  }
+  return (list(
+   coef_table = table,
+   dcoef_table = dtable
+  )
  )
 }
 
