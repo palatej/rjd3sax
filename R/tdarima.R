@@ -296,7 +296,7 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
       seasonal=seasonal,
       parameters_names=pdetails$names,
       parameters=parameters,
-      parameters_stde=sqrt(diag(covariance)),
+      parameters_stde=suppressWarnings(sqrt(diag(covariance))),
       derived_parameters_names=pdetails$dnames,
       derived_parameters=pderived$dp,
       derived_parameters_stde=pderived$edp,
@@ -519,7 +519,7 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
       }
     }
   }
-  return (list(dp=dp,edp=sqrt(edp)))
+  return (list(dp=dp,edp=suppressWarnings(sqrt(edp))))
 }
 
 

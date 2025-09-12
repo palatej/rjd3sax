@@ -18,7 +18,7 @@ summary.JD3_LTDARIMA_RSLTS  <- function(object, digits = max(3L, getOption("digi
   x<-object
   cat("Model: Time dependent SARIMA", "\n", sep = "")
   summaryInitialModel(x$initial, ...)
-  summaryFinalModel(x$final, ...)
+  printFinalModel(x$final, ...)
 }
 
 printInitialModel <- function(x, digits = max(3L, getOption("digits") - 3L), summary_info = getOption("summary_info"), ...) {
@@ -119,7 +119,7 @@ summary.JD3_LTDARIMA_LIKELIHOOD <- function(object, ...) {
   }
 
   if (length(estimate) > 0) {
-    stde <- sqrt(diag(model$covariance))
+    suppressWarnings(stde <- sqrt(diag(model$covariance)))
     t <- estimate / stde
     pval <- 2 * pt(abs(t), ndf, lower.tail = FALSE)
     table <- data.frame(estimate, stde, t, pval,
