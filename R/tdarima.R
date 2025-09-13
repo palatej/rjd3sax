@@ -339,6 +339,7 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
     if (! fixed_var){
       fp<-final$model$parameters
       var<-fp[length(fp)]
+      if ( parametrization == "mean_delta") var<-1+var*(m-1)
     }
     cmps<-ltdarima_decomposition(flin, regular = regular, seasonal = seasonal,
                                  p0=final$model$parima_0, p1=final$model$parima_1, var1 = var, se=TRUE)
@@ -350,7 +351,7 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
       irregular=cmps[,3],
       trend_stdev=cmps[,4],
       seas_stdev=cmps[,5],
-      irregular_sted=cmps[,6]
+      irregular_stdev=cmps[,6]
     )
     finals<-NULL
     if (!is.null(X) && ! is.null(regeffects)){
@@ -482,8 +483,10 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
   }
   if (! fixed_var){
     if (meandelta){
-       names <- c(names, paste0("var-delta"))
+      names <- c(names, "var-delta")
       sidx<-c(sidx,icur)
+    }else{
+      names <- c(names, "var-end")
     }
   }
   return (list(

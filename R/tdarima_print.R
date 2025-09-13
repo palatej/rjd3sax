@@ -8,8 +8,8 @@ print.JD3_LTDARIMA_RSLTS <- function(x, digits = max(3L, getOption("digits") - 3
   if (summary_info) {
     cat("\nFor a more detailed output, use the 'summary()' function.\n")
   }
-  printInitialModel(x$initial, ...)
-  printFinalModel(x$final, ...)
+  printInitialModel(x$initial, scipen=999, ...)
+  printFinalModel(x$final, scipen=999, ...)
   return(invisible(x))
 }
 
@@ -21,39 +21,39 @@ summary.JD3_LTDARIMA_RSLTS  <- function(object, digits = max(3L, getOption("digi
   printFinalModel(x$final, ...)
 }
 
-printInitialModel <- function(x, digits = max(3L, getOption("digits") - 3L), summary_info = getOption("summary_info"), ...) {
-  sarima<-.sarima_coef_table(x, ...)
-  reg<-.reg_coef_table(x, ...)
+printInitialModel <- function(x, ...) {
+  sarima<-.sarima_coef_table(x)
+  reg<-.reg_coef_table(x)
   cat("\n", "Initial SARIMA model", "\n\n", sep = "")
   print(x$likelihood)
   cat(.arima_node(sarima$sarima_orders$p, sarima$sarima_orders$d, sarima$sarima_orders$q),
       .arima_node(sarima$sarima_orders$bp, sarima$sarima_orders$bd, sarima$sarima_orders$bq),"\n")
   if (!is.null(sarima$coef_table)) {
-    print(sarima$coef_table, digits=3,...)
+    print(sarima$coef_table, ...)
   }
   if (! is.null(reg)){
     cat("\n", "Regression", "\n", sep = "")
-    print(reg, 3, ...)
+    print(reg, ...)
   }
   invisible(x)
 }
 
-printFinalModel <- function(x, digits = max(3L, getOption("digits") - 3L), summary_info = getOption("summary_info"), ...) {
-  tdarima<-.tdarima_coef_table(x, ...)
-  reg<-.reg_coef_table(x, ...)
+printFinalModel <- function(x, ...) {
+  tdarima<-.tdarima_coef_table(x)
+  reg<-.reg_coef_table(x)
   cat("\n", "Time-dependent SARIMA model", "\n\n", sep = "")
-  print(x$likelihood)
+  print(x$likelihood, ...)
   cat("\n", "Estimated parameters", "\n", sep = "")
   if (!is.null(tdarima$coef_table)) {
-    print(tdarima$coef_table, digits=3, ...)
+    print(tdarima$coef_table, ...)
   }
   if (!is.null(tdarima$dcoef_table)) {
     cat("\n", "Derived parameters", "\n", sep = "")
-    print(tdarima$dcoef_table, digits=3, ...)
+    print(tdarima$dcoef_table, ...)
   }
   if (! is.null(reg)){
     cat("\n", "Regression", "\n", sep = "")
-    print(reg, 3, ...)
+    print(reg, ...)
   }
   invisible(x)
 }
@@ -63,14 +63,13 @@ summaryInitialModel <- function(x, digits = max(3L, getOption("digits") - 3L), s
   cat("\n", "Initial SARIMA model", "\n", sep = "")
   cat(.arima_node(sarima$sarima_orders$p, sarima$sarima_orders$d, sarima$sarima_orders$q),
       .arima_node(sarima$sarima_orders$bp, sarima$sarima_orders$bd, sarima$sarima_orders$bq),"\n")
-  print(sarima$coef_table, digits = digits, na.print = "NA", ...)
+  print(sarima$coef_table, ...)
   if (!is.null(sarima$coef_table)) {
-    print(sarima$coef_table, digits = digits, na.print = "NA", ...)
+    print(sarima$coef_table, ...)
   }
   invisible(x)
 }
 
-#' @rdname jd3_print
 #' @export
 print.JD3_LTDARIMA_LIKELIHOOD <- function(x, ...) {
   ll <- x
@@ -122,7 +121,7 @@ summary.JD3_LTDARIMA_LIKELIHOOD <- function(object, ...) {
     suppressWarnings(stde <- sqrt(diag(model$covariance)))
     t <- estimate / stde
     pval <- 2 * pt(abs(t), ndf, lower.tail = FALSE)
-    table <- data.frame(estimate, stde, t, pval,
+    table <- data.frame(estimate, stde, .tformat(t), .pformat(pval),
                         stringsAsFactors = FALSE)
     colnames(table) <- c(
       "Estimate", "Std. Error",
@@ -138,7 +137,7 @@ summary.JD3_LTDARIMA_LIKELIHOOD <- function(object, ...) {
   )
 }
 
-.reg_coef_table <- function(x, ...) {
+.reg_coef_table <- function(x) {
   reg<-x$regression
   ll<-x$likelihood
   ndf <- ll$neffective - ll$nparams
@@ -148,7 +147,7 @@ summary.JD3_LTDARIMA_LIKELIHOOD <- function(object, ...) {
   stde <- sqrt(diag(reg$covariance))
   t <- val / stde
   pval <- 2 * pt(abs(t), ndf, lower.tail = FALSE)
-  table <- data.frame(val, stde, t, pval,
+  table <- data.frame(val, stde, .tformat(t), .pformat((pval)),
                       stringsAsFactors = FALSE)
   colnames(table) <- c(
     "Estimate", "Std. Error",
@@ -158,7 +157,7 @@ summary.JD3_LTDARIMA_LIKELIHOOD <- function(object, ...) {
   return (table)
 }
 
-.tdarima_coef_table <- function(x, ...) {
+.tdarima_coef_table <- function(x) {
   model<-x$model
   ll<-x$likelihood
   ndf <- ll$neffective - ll$nparams
@@ -172,7 +171,7 @@ summary.JD3_LTDARIMA_LIKELIHOOD <- function(object, ...) {
     stde <- model$parameters_stde
     t <- pall / stde
     pval <- 2 * pt(abs(t), ndf, lower.tail = FALSE)
-    table <- data.frame(pall, stde, t, pval,
+    table <- data.frame(pall, stde, .tformat(t), .pformat(pval),
                         stringsAsFactors = FALSE)
     colnames(table) <- c(
       "Estimate", "Std. Error",
@@ -187,7 +186,7 @@ summary.JD3_LTDARIMA_LIKELIHOOD <- function(object, ...) {
     dstde <- model$derived_parameters_stde
     t <- dp / dstde
     pval <- 2 * pt(abs(t), ndf, lower.tail = FALSE)
-    dtable <- data.frame(dp, dstde, t, pval,
+    dtable <- data.frame(dp, dstde, .tformat(t), .pformat(pval),
                         stringsAsFactors = FALSE)
     colnames(dtable) <- c(
       "Estimate", "Std. Error",
@@ -204,6 +203,13 @@ summary.JD3_LTDARIMA_LIKELIHOOD <- function(object, ...) {
  )
 }
 
+.pformat<-function(pval){
+  sapply(pval, function(z){sprintf("%0.3f", z)})
+}
+
+.tformat<-function(t){
+  sapply(t, function(z){sprintf("%.2f", z)})
+}
 
 .arima_node <- function(p, d, q) {
   s <- paste(p, d, q, sep = ",")
