@@ -6,7 +6,7 @@ sa_decomposition.JD3_LTDARIMA_RSLTS <- function(x, ...) {
   if (is.null(x)) {
     return(NULL)
   }
-  x<-x$decomposition
+  x<-x$final$decomposition
   if (is.null(x)) {
     return(NULL)
   }

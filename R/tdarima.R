@@ -231,19 +231,21 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
     tsregs1<-ts(data=regs1, frequency = freq, start = start)
   }
 
+  parameters<-.proc_vector(jrslt, "model.pfixed")
+  flin<-ts(data=.proc_vector(jrslt, "regression.y_lin0"), frequency = freq, start = start)
   # initial (fixed) model
   initial=list(
     model=list(
       period=freq,
       regular=regular,
       seasonal=seasonal,
-      parameters=.proc_vector(jrslt, "model.pfixed"),
+      parameters=parameters,
       covariance=.proc_matrix(jrslt, "model.pfixed_cov")),
     likelihood=structure(.proc_likelihood(jrslt, "ll0."), class=LTDARIMA_LL),
     regression=list(
       coefficients=.proc_vector(jrslt, "regression.c0"),
       covariance=.proc_matrix(jrslt, "regression.cov0"),
-      linearized=ts(data=.proc_vector(jrslt, "regression.y_lin0"), frequency = freq, start = start),
+      linearized=ts(data=flin),
       regression_effect=tsregs0),
     residuals=list(
       res=.proc_vector(jrslt, "res0.res"),
@@ -261,8 +263,32 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
       nudruns=.proc_test(jrslt, "res0.nudruns"),
       ludruns=.proc_test(jrslt, "res0.ludruns")
     )
-
   )
+  if (decomposition){
+    sa0<-NULL
+    s<-data
+    cmps<-.ucm(flin, regular, seasonal, parameters)
+    components<-list(
+      y=s,
+      sa=cmps[,1]+cmps[,3],
+      trend=cmps[,1],
+      seas=cmps[,2],
+      irregular=cmps[,3],
+      trend_stdev=cmps[,4],
+      seas_stdev=cmps[,5],
+      irregular_stdev=cmps[,6]
+    )
+    finals<-NULL
+    if (!is.null(X) && ! is.null(regeffects)){
+
+    }
+    sa0<-list(
+      components=components,
+      finals=finals
+    )
+    initial[["decomposition"]]=sa0
+  }
+
   flin<-ts(data=.proc_vector(jrslt, "regression.y_lin1"), frequency = freq, start = start)
   parameters<-.proc_vector(jrslt, "model.pall")
   covariance<-.proc_matrix(jrslt, "model.pall_cov")
@@ -332,8 +358,8 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
     )
   )
 
-  sa<-NULL
   if (decomposition == TRUE){
+    sa1<-NULL
     s<-data
     var<-1
     if (! fixed_var){
@@ -357,13 +383,53 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
     if (!is.null(X) && ! is.null(regeffects)){
 
     }
-    sa<-list(
+    sa1<-list(
       components=components,
       finals=finals
     )
+    final[["decomposition"]]=sa1
+  }
+  return(structure(list(initial=initial, final=final), class=LTDARIMA))
+}
+
+.sarima<-function(period, regular, seasonal, w){
+  phi<-NULL
+  bphi<-NULL
+  theta<-NULL
+  btheta<-NULL
+
+  p = regular[1]
+  d = regular[2]
+  q = regular[3]
+  bp = seasonal[1]
+  bd = seasonal[2]
+  bq = seasonal[3]
+  i<-1
+  if (p>0){
+    phi<-w[i:(i+p-1)]
+    i<-i+p
+  }
+  if (bp>0){
+    bphi<-w[i:(i+bp-1)]
+    i<-i+bp
+  }
+  if (q>0){
+    theta<-w[i:(i+q-1)]
+    i<-i+q
+  }
+  if (bq>0){
+    btheta<-w[i:(i+bq-1)]
   }
 
-  return(structure(list(initial=initial, final=final, decomposition=sa), class=LTDARIMA))
+  return (rjd3toolkit::sarima_model("", period, phi, d, theta, bphi, bd, btheta))
+}
+
+.ucm<-function(data, regular, seasonal, p){
+
+   sarima<-.sarima(frequency(data), regular, seasonal, p)
+  ucm<-rjd3toolkit::sarima_decompose(sarima)
+  if (is.null(ucm)) return (NULL)
+  return (rjd3toolkit::ucarima_estimate(data, ucm) )
 }
 
 .pdetails<-function(meandelta, regular, seasonal, fixed_phi, fixed_bphi,
