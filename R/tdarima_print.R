@@ -74,10 +74,10 @@ summaryInitialModel <- function(x, digits = max(3L, getOption("digits") - 3L), s
 print.JD3_LTDARIMA_LIKELIHOOD <- function(x, ...) {
   ll <- x
   cat("Number of observations:", ll$nobs, "\n")
-  cat("Number of effective observations:", ll$neffective, "\n")
+  cat("Number of effective observations:", ll$neffectiveobs, "\n")
   cat("Number of parameters:", ll$nparams, "\n\n")
   cat("Loglikelihood:", ll$ll, "\n")
-  cat("Standard error of the regression (ML estimate):", sqrt(ll$ssq / ll$neffective), "\n")
+  cat("Standard error of the regression (ML estimate):", sqrt(ll$ssq / ll$neffectiveobs), "\n")
   cat("AIC:", ll$aic, "\n")
   cat("AICC:", ll$aicc, "\n")
   cat("BIC:", ll$bic, "\n\n")
@@ -140,7 +140,7 @@ summary.JD3_LTDARIMA_LIKELIHOOD <- function(object, ...) {
 .reg_coef_table <- function(x) {
   reg<-x$regression
   ll<-x$likelihood
-  ndf <- ll$neffective - ll$nparams
+  ndf <- ll$df
   val <- reg$coefficients
   if (is.null(val)){return (NULL)}
   names <- paste0("var-", 1:length(val))
@@ -160,7 +160,7 @@ summary.JD3_LTDARIMA_LIKELIHOOD <- function(object, ...) {
 .tdarima_coef_table <- function(x) {
   model<-x$model
   ll<-x$likelihood
-  ndf <- ll$neffective - ll$nparams
+  ndf <- ll$df
   pall <- model$parameters
   p0<-model$parima_0
   p1<-model$parima_1
