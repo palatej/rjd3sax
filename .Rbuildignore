@@ -1,5 +1,5 @@
 ^.*\.Rproj$
-^\.Rproj
+^\.Rproj\.user$
 
 ^\.git$
 ^\.github$
@@ -16,5 +16,34 @@
 
 ^\.lintr$
 
-^pom.xml$
-^\.Rproj\.user$
+^appveyor\.yml$
+.travis.yml
+
+cran-comments.md
+
+^\.DS_Store$
+
+^revdep$
+^reconf\.sh$
+
+^pom\.xml$
+
+^CITATION\.cff$
+^LICENSE.md$
+^LICENSE$
+
+^\.httr-oauth$
+^\.zenodo\.json$
+
+^checklist.yml$
+^codecov\.yml$
+^data-raw$
+^dev$
+
+^man-roxygen$
+^organisation.yml$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+
+^lychee\.toml$
+^\.lycheeignore$

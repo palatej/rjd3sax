@@ -1,4 +1,4 @@
-Package: rjd3sax
+Package: rjd3xjars
 Type: Package
 Title: R Interface to 'JDemetra+ 3.x' time series analysis software
 Version: 0.1.0
@@ -11,24 +11,16 @@ Depends:
   R (>= 4.1.0)
 Imports:
   rJava (>= 1.0-6),
-  rjd3toolkit (>= 3.7.1),
-Remotes: 
-    github::rjdverse/rjd3toolkit
-SystemRequirements: Java (>= 17)
-License: file LICENSE
-URL: https://github.com/jdemetra/rjd3stl, https://rjdverse.github.io/rjd3sax/
+  rjd3toolkit (>= 3.7.1)
+SystemRequirements: Java (>= 21)
+License: EUPL
+URL: https://github.com/rjdverse/rjd3advsajars, https://rjdverse.github.io/rjd3xjars/
 LazyData: TRUE
 Suggests:
     knitr,
     rmarkdown
 RoxygenNote: 7.3.3
-BugReports: https://github.com/rjdverse/rjd3sax/issues
+BugReports: https://github.com/rjdverse/rjd3xjars/issues
 Encoding: UTF-8
 Collate: 
-    'utils.R'
-    'adaptivesplines.R'
-    'tdarima.R'
-    'tdgeneric.R'
-    'tdarima_plot.R'
-    'tdarima_print.R'
     'zzz.R'

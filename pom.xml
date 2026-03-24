@@ -3,8 +3,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.github.rjdverse.rjd3stl</groupId>
-	<artifactId>rjd3stl</artifactId>
+	<groupId>com.github.rjdverse.rjd3xjars</groupId>
+	<artifactId>rjd3xjars</artifactId>
 	<version>ignore_version</version>
 	<packaging>pom</packaging>
 
@@ -17,20 +17,57 @@
 	<dependencies>
 		<dependency>
 			<groupId>eu.europa.ec.joinup.sat</groupId>
-			<artifactId>jdplus-advancedsa-base-r</artifactId>
+			<artifactId>jdplus-sts-base-r</artifactId>
+			<version>${jdplus-incubator.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>jdplus-toolkit-base-r</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>eu.europa.ec.joinup.sat</groupId>
+			<artifactId>jdplus-sts-base-core</artifactId>
+			<version>${jdplus-incubator.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>jdplus-sa-base-core</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>eu.europa.ec.joinup.sat</groupId>
+			<artifactId>jdplus-sts-base-api</artifactId>
 			<version>${jdplus-incubator.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>*</groupId>
 					<artifactId>jdplus-sa-base-api</artifactId>
 				</exclusion>
+
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>eu.europa.ec.joinup.sat</groupId>
+			<artifactId>jdplus-sts-base-io</artifactId>
+			<version>${jdplus-incubator.version}</version>
+			<exclusions>
 				<exclusion>
 					<groupId>*</groupId>
-					<artifactId>jdplus-sa-base-core</artifactId>
+					<artifactId>*</artifactId>
 				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>eu.europa.ec.joinup.sat</groupId>
+			<artifactId>jdplus-advancedsa-base-r</artifactId>
+			<version>${jdplus-incubator.version}</version>
+			<exclusions>
 				<exclusion>
 					<groupId>*</groupId>
-					<artifactId>jdplus-toolkit-base-r</artifactId>
+					<artifactId>*</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -108,7 +145,17 @@
 			</snapshots>
 		</repository>
 		<repository>
-			<id>jdemetra-snapshots</id>
+			<id>central-snapshots</id>
+			<url>https://central.sonatype.com/repository/maven-snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>old-snapshots</id>
 			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
 			<releases>
 				<enabled>false</enabled>

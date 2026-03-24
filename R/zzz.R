@@ -1,14 +1,30 @@
-#' @include utils.R tdarima_plot.R tdarima_print.R
-
+#' @importFrom rJava .jpackage .jcall
+#' @importFrom rjd3toolkit get_java_version minimal_java_version
+.onAttach <- function(libname, pkgname) {
+    if (rjd3toolkit::get_java_version() < rjd3toolkit::minimal_java_version) {
+        packageStartupMessage(sprintf(
+            "Your java version is %s. %s or higher is needed.",
+            rjd3toolkit::get_java_version(),
+            rjd3toolkit::minimal_java_version
+        ))
+    }
+}
 .onLoad <- function(libname, pkgname) {
-  if (!requireNamespace("rjd3toolkit", quietly = TRUE)) stop("Loading rjd3 libraries failed")
+    result <- .jpackage(pkgname, lib.loc = libname)
+    if (!result) {
+        stop("Loading java packages failed", call. = FALSE)
+    }
 
-  result <- .jpackage(pkgname, lib.loc=libname)
-  if (!result) stop("Loading java packages failed")
+    # reload extractors
 
-  #proto.dir <- system.file("proto", package = pkgname)
-  #RProtoBuf::readProtoFiles2(protoPath = proto.dir)
-
-  # reload extractors
-  .jcall("jdplus/toolkit/base/api/information/InformationExtractors", "V", "reloadExtractors")
+    if (rjd3toolkit::get_java_version() >= rjd3toolkit::minimal_java_version) {
+        # reload providers
+        try({
+            rJava::.jcall(
+                obj = "jdplus/toolkit/base/api/information/InformationExtractors",
+                "V",
+                "reloadExtractors"
+            )
+        })
+    }
 }

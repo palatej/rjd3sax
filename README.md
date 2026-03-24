@@ -1,13 +1,16 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# rjd3sax
+# rjd3xjars
 
 <!-- badges: start -->
+
+[![Mentioned in Awesome Official
+Statistics](https://awesome.re/mentioned-badge.svg)](http://www.awesomeofficialstatistics.org)
 <!-- badges: end -->
 
-R interface giving access to sax (Loess based time series decomposition)
-as implemented in JDemetra+ v3.x.
+R interface giving access to advanced SA methods (for instance time
+dependent ARIMA) as implemented in JDemetra+ v3.x.
 
 ## Installation
 
@@ -24,24 +27,23 @@ To get the current stable version (from the latest release):
 ``` r
 # install.packages("remotes")
 remotes::install_github("rjdverse/rjd3toolkit@*release")
-remotes::install_github("rjdverse/rjd3highfreq@*release")
-remotes::install_github("rjdverse/rjd3sax@*release")
+remotes::install_github("rjdverse/rjd3xjars@*release")
 ```
 
-- From [r-universe](https://rjdverse.r-universe.dev/rjd3sax):
+- From [r-universe](https://rjdverse.r-universe.dev/rjdxjars):
 
 ``` r
-install.packages("rjd3sax", repos = c("https://rjdverse.r-universe.dev", "https://cloud.r-project.org"))
+install.packages("rjd3xjars", repos = c("https://rjdverse.r-universe.dev", "https://cloud.r-project.org"))
 ```
 
 ### Development version
 
-You can install the development version of **rjd3sax** from
+You can install the development version of **rjd3xjars** from
 [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("rjdverse/rjd3sax")
+remotes::install_github("rjdverse/rjd3xjars")
 ```
 
 ## Package Maintenance and contributing
