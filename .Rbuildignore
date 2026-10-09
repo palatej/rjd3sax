@@ -18,3 +18,5 @@
 
 ^pom.xml$
 ^\.Rproj\.user$
+^\.positai$
+^\.claude$

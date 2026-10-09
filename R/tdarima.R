@@ -42,12 +42,23 @@ tdairline_decomposition<-function(data, th, bth, se=FALSE){
 }
 
 .jestimation<-function(data, mean=FALSE, X=NULL, regular, seasonal, fixed_phi=TRUE, fixed_bphi=TRUE,
-                              fixed_theta=FALSE, fixed_btheta=FALSE, fixed_var=TRUE, eps=1e-7, parametrization="mean_delta"){
+                              fixed_theta=FALSE, fixed_btheta=FALSE, fixed_var=TRUE, parametrization="mean_delta", eps=1e-7, simplificationThreshold=0){
   if (! is.ts(data)) stop("data should be a time series (ts)")
-  jrslt<-.jcall('jdplus/advancedsa/base/r/TimeVaryingArimaModels', 'Ljdplus/advancedsa/base/core/tdarima/LtdArimaResults;', 'estimate',
-                as.numeric(data), as.integer(frequency(data)), as.logical(mean), rjd3toolkit::.r2jd_matrix(X), as.integer(regular), as.integer(seasonal)
-                , as.logical(fixed_phi), as.logical(fixed_bphi), as.logical(fixed_theta), as.logical(fixed_btheta), as.logical(fixed_var)
-                , as.numeric(eps), as.character(parametrization))
+  jrslt<-.jcall('jdplus/advancedsa/base/r/TimeVaryingArimaModels', 'Ljdplus/advancedsa/base/core/tdarima/LtdResults;', 'estimate',
+                as.numeric(data),
+                as.integer(frequency(data)),
+                as.logical(mean),
+                rjd3toolkit::.r2jd_matrix(X),
+                as.integer(regular),
+                as.integer(seasonal),
+                as.logical(fixed_phi),
+                as.logical(fixed_bphi),
+                as.logical(fixed_theta),
+                as.logical(fixed_btheta),
+                as.logical(fixed_var),
+                as.character(parametrization),
+                as.numeric(eps),
+                as.numeric(simplificationThreshold))
   return (jrslt)
 }
 
@@ -218,9 +229,10 @@ tdarima_decomposition<-function(data, regular, seasonal, parameters, se=FALSE){
 #' @param fixed_theta Indicates that the regular moving average parameters are fixed or not.
 #' @param fixed_btheta Indicates that the seasonal moving average parameters are fixed or not.
 #' @param fixed_var Indicates that the variances of the innovations are fixed or not.
-#' @param eps The precision of the optimization procedure
 #' @param parametrization Type of the parametrization of the linear time-dependent parameters:
 #' first and last parameters or average and variation of the parameters
+#' @param eps The precision of the optimization procedure
+#' @param simplification_threshold p-value for non significant parameters (simplified)
 #' @param decomposition Indicates that a decomposition of the series must be processed
 #' @param regeffects In case of regression variables (excluding the mean correction),
 #' the user must specify to which component the regression effects are associated
@@ -240,20 +252,20 @@ tdarima_decomposition<-function(data, regular, seasonal, parameters, se=FALSE){
 
 
 ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), seasonal=c(0,1,1), fixed_phi=TRUE, fixed_bphi=TRUE,
-                                fixed_theta=FALSE, fixed_btheta=FALSE, fixed_var=TRUE,
-                              eps=1e-7, parametrization=c("mean_delta", "start_end"),
+                                fixed_theta=FALSE, fixed_btheta=FALSE, fixed_var=TRUE, parametrization=c("mean_delta", "start_end"),
+                              eps=1e-7, simplification_threshold=0,
                               decomposition=TRUE, regeffects=NULL, clean=TRUE){
 
   parametrization=match.arg(parametrization)
   if (clean)
     data<-clean_extremities(data)
-  jrslt<-.jestimation(data, mean, X, regular, seasonal, fixed_phi, fixed_bphi, fixed_theta, fixed_btheta, fixed_var, eps, parametrization)
+  jrslt<-.jestimation(data, mean, X, regular, seasonal, fixed_phi, fixed_bphi, fixed_theta, fixed_btheta, fixed_var, parametrization, eps,simplification_threshold)
 
   freq<-frequency(data)
   start=start(data)
 
-  regs0<-.proc_vector(jrslt, "regression.effect0")
-  regs1<-.proc_vector(jrslt, "regression.effect1")
+  regs0<-.proc_vector(jrslt, "sarima.regression.effect")
+  regs1<-.proc_vector(jrslt, "final.regression.effect")
   tsregs0 <-NULL;
   tsregs1<-NULL;
 
@@ -262,8 +274,8 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
     tsregs1<-ts(data=regs1, frequency = freq, start = start)
   }
 
-  parameters<-.proc_vector(jrslt, "model.pfixed")
-  flin<-ts(data=.proc_vector(jrslt, "regression.y_lin0"), frequency = freq, start = start)
+  parameters<-.proc_vector(jrslt, "sarima.model.p")
+  flin<-ts(data=.proc_vector(jrslt, "sarima.regression.y_lin"), frequency = freq, start = start)
   # initial (fixed) model
   initial=list(
     model=list(
@@ -271,28 +283,28 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
       regular=regular,
       seasonal=seasonal,
       parameters=parameters,
-      covariance=.proc_matrix(jrslt, "model.pfixed_cov")),
-    likelihood=structure(.proc_likelihood(jrslt, "ll0."), class=LTDARIMA_LL),
+      covariance=.proc_matrix(jrslt, "sarima.model.p_cov")),
+    likelihood=structure(.proc_likelihood(jrslt, "sarima.likelihood."), class=LTDARIMA_LL),
     regression=list(
-      coefficients=.proc_vector(jrslt, "regression.c0"),
-      covariance=.proc_matrix(jrslt, "regression.cov0"),
+      coefficients=.proc_vector(jrslt, "sarima.regression.c"),
+      covariance=.proc_matrix(jrslt, "sarima.regression.cov"),
       linearized=ts(data=flin),
       regression_effect=tsregs0),
     residuals=list(
-      res=.proc_vector(jrslt, "res0.res"),
-      type=.proc_data(jrslt, "res0.type"),
-      df=.proc_int(jrslt, "res0.df"),
-      dfc=.proc_int(jrslt, "res0.dfc"),
-      mean=.proc_test(jrslt, "res0.mean"),
-      skewness=.proc_test(jrslt, "res0.skewness"),
-      kurtosis=.proc_test(jrslt, "res0.kurtosis"),
-      normality=.proc_test(jrslt, "res0.doornikhansen"),
-      ljung_box=.proc_test(jrslt, "res0.lb"),
-      seasonal_ljung_box=.proc_test(jrslt, "res0.seaslb"),
-      nruns=.proc_test(jrslt, "res0.nruns"),
-      lruns=.proc_test(jrslt, "res0.lruns"),
-      nudruns=.proc_test(jrslt, "res0.nudruns"),
-      ludruns=.proc_test(jrslt, "res0.ludruns")
+      res=.proc_vector(jrslt, "sarima.residuals.res"),
+      type=.proc_data(jrslt, "sarima.residuals.type"),
+      df=.proc_int(jrslt, "sarima.residuals.df"),
+      dfc=.proc_int(jrslt, "sarima.residuals.dfc"),
+      mean=.proc_test(jrslt, "sarima.residuals.mean"),
+      skewness=.proc_test(jrslt, "sarima.residuals.skewness"),
+      kurtosis=.proc_test(jrslt, "sarima.residuals.kurtosis"),
+      normality=.proc_test(jrslt, "sarima.residuals.doornikhansen"),
+      ljung_box=.proc_test(jrslt, "sarima.residuals.lb"),
+      seasonal_ljung_box=.proc_test(jrslt, "sarima.residuals.seaslb"),
+      nruns=.proc_test(jrslt, "sarima.residuals.nruns"),
+      lruns=.proc_test(jrslt, "sarima.residuals.lruns"),
+      nudruns=.proc_test(jrslt, "sarima.residuals.nudruns"),
+      ludruns=.proc_test(jrslt, "sarima.residuals.ludruns")
     )
   )
   if (decomposition){
@@ -322,10 +334,10 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
     }
   }
 
-  flin<-ts(data=.proc_vector(jrslt, "regression.y_lin1"), frequency = freq, start = start)
-  parameters<-.proc_vector(jrslt, "model.pall")
-  pcovariance<-.proc_matrix(jrslt, "model.pall_cov")
-  dpcovariance<-.proc_matrix(jrslt, "model.pderived_cov")
+  flin<-ts(data=.proc_vector(jrslt, "final.regression.y_lin"), frequency = freq, start = start)
+  parameters<-.proc_vector(jrslt, "final.model.pall")
+  pcovariance<-.proc_matrix(jrslt, "final.model.pall_cov")
+  dpcovariance<-.proc_matrix(jrslt, "final.model.pderived_cov")
   # pdetails<-.pdetails(parametrization=="mean_delta", regular, seasonal, fixed_phi, fixed_bphi, fixed_theta, fixed_btheta, fixed_var)
   # pderived<-.pderived(parametrization=="mean_delta", parameters, covariance, pdetails$didx)
   m<-length(data)
@@ -354,46 +366,46 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
       period=freq,
       regular=regular,
       seasonal=seasonal,
-      parameters_names=.proc_vector(jrslt, "model.pnames"),
+      parameters_names=.proc_vector(jrslt, "final.model.pnames"),
       parameters=parameters,
       parameters_covariance=pcovariance,
       parameters_stde=suppressWarnings(sqrt(diag(pcovariance))),
-      derived_parameters_names=.proc_vector(jrslt, "model.pderived_names"),
-      derived_parameters=.proc_vector(jrslt, "model.pderived"),
+      derived_parameters_names=.proc_vector(jrslt, "final.model.pderived_names"),
+      derived_parameters=.proc_vector(jrslt, "final.model.pderived"),
       derived_parameters_covariance=dpcovariance,
       derived_parameters_stde=suppressWarnings(sqrt(diag(dpcovariance))),
-      parima_0=.proc_vector(jrslt, "model.p0"),
-      parima_1=.proc_vector(jrslt, "model.p1"),
-      parima_mean=.proc_vector(jrslt, "model.pmean"),
-      parima_delta=.proc_vector(jrslt, "model.pdelta"),
+      p0=.proc_vector(jrslt, "final.model.p0"),
+      p1=.proc_vector(jrslt, "final.model.p1"),
+      pmean=.proc_vector(jrslt, "final.model.pmean"),
+      pdelta=.proc_vector(jrslt, "final.model.pdelta"),
       covariance=pcovariance,
-      lr_test=.proc_test(jrslt, "model.lrtest"),
-      stationarity_test=.proc_test(jrslt, "model.test_stationarity")
+      lr_test=.proc_test(jrslt, "final.model.lrtest"),
+      stationarity_test=.proc_test(jrslt, "final.model.test_stationarity")
     ),
       # scores=.proc_vector(jrslt, "regression.ml.score1"),
       # information=.proc_matrix(jrslt, "regression.ml.information1")),
-    likelihood=structure(rjd3toolkit::.proc_likelihood(jrslt, "ll1."), class=LTDARIMA_LL),
+    likelihood=structure(rjd3toolkit::.proc_likelihood(jrslt, "final.likelihood."), class=LTDARIMA_LL),
     regression=list(
-      coefficients=.proc_vector(jrslt, "regression.c1"),
-      covariance=.proc_matrix(jrslt, "regression.cov1"),
+      coefficients=.proc_vector(jrslt, "final.regression.c"),
+      covariance=.proc_matrix(jrslt, "final.regression.cov"),
       linearized=flin,
       regression_effect=tsregs1
     ),
     residuals=list(
-      res=.proc_vector(jrslt, "res1.res"),
-      type=.proc_data(jrslt, "res1.type"),
-      df=.proc_int(jrslt, "res1.df"),
-      dfc=.proc_int(jrslt, "res1.dfc"),
-      mean=.proc_test(jrslt, "res1.mean"),
-      skewness=.proc_test(jrslt, "res1.skewness"),
-      kurtosis=.proc_test(jrslt, "res1.kurtosis"),
-      normality=.proc_test(jrslt, "res1.doornikhansen"),
-      ljung_box=.proc_test(jrslt, "res1.lb"),
-      seasonal_ljung_box=.proc_test(jrslt, "res1.seaslb"),
-      nruns=.proc_test(jrslt, "res1.nruns"),
-      lruns=.proc_test(jrslt, "res1.lruns"),
-      nudruns=.proc_test(jrslt, "res1.nudruns"),
-      ludruns=.proc_test(jrslt, "res1.ludruns")
+      res=.proc_vector(jrslt, "final.residuals.res"),
+      type=.proc_data(jrslt, "final.residuals.type"),
+      df=.proc_int(jrslt, "final.residuals.df"),
+      dfc=.proc_int(jrslt, "final.residuals.dfc"),
+      mean=.proc_test(jrslt, "final.residuals.mean"),
+      skewness=.proc_test(jrslt, "final.residuals.skewness"),
+      kurtosis=.proc_test(jrslt, "final.residuals.kurtosis"),
+      normality=.proc_test(jrslt, "final.residuals.doornikhansen"),
+      ljung_box=.proc_test(jrslt, "final.residuals.lb"),
+      seasonal_ljung_box=.proc_test(jrslt, "final.residuals.seaslb"),
+      nruns=.proc_test(jrslt, "final.residuals.nruns"),
+      lruns=.proc_test(jrslt, "final.residuals.lruns"),
+      nudruns=.proc_test(jrslt, "final.residuals.nudruns"),
+      ludruns=.proc_test(jrslt, "final.residuals.ludruns")
     )
   )
 
@@ -407,7 +419,7 @@ ltdarima_estimation<-function(data, mean=FALSE, X=NULL, regular=c(0,1,1), season
       if ( parametrization == "mean_delta") var<-1+var*(m-1)
     }
     cmps<-ltdarima_decomposition(flin, regular = regular, seasonal = seasonal,
-                                 p0=final$model$parima_0, p1=final$model$parima_1, var1 = var, se=TRUE)
+                                 p0=final$model$p0, p1=final$model$p1, var1 = var, se=TRUE)
     if (! is.null(cmps)){
       components<-list(
         y=flin,
