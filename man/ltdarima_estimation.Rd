@@ -15,8 +15,9 @@ ltdarima_estimation(
   fixed_theta = FALSE,
   fixed_btheta = FALSE,
   fixed_var = TRUE,
-  eps = 1e-07,
   parametrization = c("mean_delta", "start_end"),
+  eps = 1e-07,
+  simplification_threshold = 0,
   decomposition = TRUE,
   regeffects = NULL,
   clean = TRUE
@@ -44,10 +45,12 @@ data in the series}
 
 \item{fixed_var}{Indicates that the variances of the innovations are fixed or not.}
 
-\item{eps}{The precision of the optimization procedure}
-
 \item{parametrization}{Type of the parametrization of the linear time-dependent parameters:
 first and last parameters or average and variation of the parameters}
+
+\item{eps}{The precision of the optimization procedure}
+
+\item{simplification_threshold}{p-value for non significant parameters (simplified)}
 
 \item{decomposition}{Indicates that a decomposition of the series must be processed}
 
@@ -60,7 +63,7 @@ final components are not computed.}
 set to false if you want forecasts/backcasts}
 }
 \value{
-A JD3_LTDARIMA_RSLTS object
+A JD3_LTDARIMA object
 }
 \description{
 Estimation and decomposition of a regression model with linear time-dependent SARIMA noises

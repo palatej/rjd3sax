@@ -21,9 +21,6 @@
   criterion = "AIC"
 )
 }
-\arguments{
-\item{criterion}{}
-}
 \description{
 Title
 }

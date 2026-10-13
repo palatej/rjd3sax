@@ -2,7 +2,7 @@
 NULL
 
 #' @export
-sa_decomposition.JD3_LTDARIMA_RSLTS <- function(x, ...) {
+sa_decomposition.JD3_LTDARIMA <- function(x, ...) {
   if (is.null(x)) {
     return(NULL)
   }
@@ -14,12 +14,12 @@ sa_decomposition.JD3_LTDARIMA_RSLTS <- function(x, ...) {
 }
 
 #' @export
-sa_decomposition.JD3_LTDARIMA_FINAL_RSLTS <- function(x, ...) {
+sa_decomposition.JD3_LTDARIMA_TD <- function(x, ...) {
   return (.sa(x))
 }
 
 #' @export
-sa_decomposition.JD3_LTDARIMA_INITIAL_RSLTS <- function(x, ...) {
+sa_decomposition.JD3_LTDARIMA_FIXED <- function(x, ...) {
   return (.sa(x))
 }
 

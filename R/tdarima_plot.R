@@ -2,7 +2,7 @@
 
 
 #' @export
-plot.JD3_LTDARIMA_INITIAL_RSLTS <- function(x, first_date = NULL, last_date = NULL,
+plot.JD3_LTDARIMA_FIXED <- function(x, first_date = NULL, last_date = NULL,
                                       type_chart = c("sa-trend", "seas-irr"),
                                       caption = c(
                                         "sa-trend" = "Y, Sa, T (initial)",
@@ -26,7 +26,7 @@ plot.JD3_LTDARIMA_INITIAL_RSLTS <- function(x, first_date = NULL, last_date = NU
 }
 
 #' @export
-plot.JD3_LTDARIMA_FINAL_RSLTS <- function(x, first_date = NULL, last_date = NULL,
+plot.JD3_LTDARIMA_TD <- function(x, first_date = NULL, last_date = NULL,
                                             type_chart = c("sa-trend", "seas-irr"),
                                             caption = c(
                                               "sa-trend" = "Y, Sa, T (TD)" ,
@@ -50,7 +50,7 @@ plot.JD3_LTDARIMA_FINAL_RSLTS <- function(x, first_date = NULL, last_date = NULL
 }
 
 #' @export
-plot.JD3_LTDARIMA_RSLTS <- function(x, first_date = NULL, last_date = NULL,
+plot.JD3_LTDARIMA <- function(x, first_date = NULL, last_date = NULL,
                                           type_chart = c("sa-trend", "seas-irr"),
                                           caption = c(
                                             "sa-trend" = "Y, Sa, trend (time-dependent)",
@@ -61,5 +61,9 @@ plot.JD3_LTDARIMA_RSLTS <- function(x, first_date = NULL, last_date = NULL,
                                             s = "#1E6C0B", i = "#155692"
                                           ),
                                           ...) {
-  plot(x$final, first_date, last_date, type_chart, caption, colors, ...)
+  if (is.null(x$final)){
+    plot(x$initial)
+  }else{
+    plot(x$final, first_date, last_date, type_chart, caption, colors, ...)
+  }
 }
