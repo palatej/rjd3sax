@@ -18,7 +18,7 @@ of linear time-dependent SARIMA models"><!-- mathjax --><script src="https://cdn
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">rjd3sax</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.9.0.9000</span>
       </span>
     </div>
 
@@ -107,8 +107,9 @@ of linear time-dependent SARIMA models</p>
 <span class="r-in"><span> fixed_var<span class="op">=</span><span class="cn">FALSE</span>, eps<span class="op">=</span><span class="fl">1e-15</span>, parametrization <span class="op">=</span> <span class="st">"mean_delta"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sa</span><span class="op">&lt;-</span><span class="fu">rjd3sax</span><span class="fu">::</span><span class="fu">ltdarima_decomposition</span><span class="op">(</span><span class="va">s</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">1</span>,<span class="fl">1</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span><span class="va">q</span><span class="op">$</span><span class="va">final</span><span class="op">$</span><span class="va">model</span><span class="op">$</span><span class="va">parima_0</span>, <span class="va">q</span><span class="op">$</span><span class="va">final</span><span class="op">$</span><span class="va">model</span><span class="op">$</span><span class="va">parima_1</span>, var1<span class="op">=</span><span class="va">q</span><span class="op">$</span><span class="va">final</span><span class="op">$</span><span class="va">model</span><span class="op">$</span><span class="va">parameters</span><span class="op">[</span><span class="fl">5</span><span class="op">]</span>, se<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in if (var1 != 1) {    et &lt;- .linear(1, sqrt(var1), n)    var &lt;- matrix(et * et, nrow = 1, ncol = n)    p &lt;- rbind(p, var)}:</span> argument is of length zero</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/ts.plot.html" class="external-link">ts.plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/ts.union.html" class="external-link">ts.union</a></span><span class="op">(</span><span class="va">s</span>, <span class="va">sa</span><span class="op">$</span><span class="va">components</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span>, <span class="va">sa</span><span class="op">$</span><span class="va">components</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">+</span><span class="va">sa</span><span class="op">$</span><span class="va">components_stdev</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span>, col<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'gray'</span>, <span class="st">'blue'</span>, <span class="st">'magenta'</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="ltdarima_decomposition-1.png" alt="" width="700" height="433"></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'sa' not found</span>
 </code></pre></div>
     </div>
   </div>
@@ -123,7 +124,7 @@ of linear time-dependent SARIMA models</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer></div>
